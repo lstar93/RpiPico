@@ -58,6 +58,7 @@ enum I2C_SPEED {
     FAST = 400000
 };
 
+// https://cdn-shop.adafruit.com/datasheets/PCA9685.pdf
 class PCA9685 {
     uint8_t address;
     I2C i2c;
@@ -77,8 +78,7 @@ public:
         bi_decl(bi_2pins_with_func(sda, scl, GPIO_FUNC_I2C));
 
         // initialize device
-        i2c.write_register(address, PCA9685_MODE1_REG, 0xA0);
-	    i2c.write_register(address, PCA9685_MODE2_REG, 0x04);
+        i2c.write_register(address, PCA9685_MODE1_REG, 0xA0); // A0 = restart + enable autoincrement
     }
 
     void set_frequency(uint16_t freq) {
@@ -95,9 +95,10 @@ public:
         // need to be in sleep mode to set the pre-scaler
         uint8_t MODE1_REG = i2c.read_register(address, PCA9685_MODE1_REG);
 
-        i2c.write_register(address, PCA9685_MODE1_REG, ((MODE1_REG & 0x7F) | 0x10));
+        // if restart is set also set bit no 4 PCA9685_SLEEP_BIT
+        i2c.write_register(address, PCA9685_MODE1_REG, ((MODE1_REG & 0x7F) | PCA9685_SLEEP_BIT)); 
 
-        // set prescaler
+        // set prescaler value
         i2c.write_register(address, PCA9685_PRESCALE, static_cast<uint8_t>(preScalerVal));
 
         // reset
