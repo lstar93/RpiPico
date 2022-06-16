@@ -106,20 +106,20 @@ public:
         sleep_us(500);
     }
 
-void set_pwm(uint8_t pin, uint16_t led_on, uint16_t led_off) {
-    if (pin > 15) {
-        pin = 15;
+    void set_pwm(uint8_t pin, uint16_t led_on, uint16_t led_off) {
+        if (pin > 15) {
+            pin = 15;
+        }
+
+        std::vector<uint8_t> buffer(5);
+        buffer[0] = PCA9685_LED0_ON_L + (4 * pin);
+        buffer[1] = (0x00FF & led_on);
+        buffer[2] = (0xFF00 & led_on) >> 8;
+        buffer[3] = (0x00FF & led_off);
+        buffer[4] = (0xFF00 & led_off) >> 8;
+
+        i2c.write_register(address, buffer);
     }
-
-	std::vector<uint8_t> buffer(5);
-	buffer[0] = PCA9685_LED0_ON_L + (4 * pin);
-	buffer[1] = (0x00FF & led_on);
-	buffer[2] = (0xFF00 & led_on) >> 8;
-	buffer[3] = (0x00FF & led_off);
-	buffer[4] = (0xFF00 & led_off) >> 8;
-
-    i2c.write_register(address, buffer);
-}
 
 };
 
