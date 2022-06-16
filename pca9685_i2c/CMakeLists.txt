@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_executable(pca9685_i2c
         pca9685_i2c.cpp
+        pca9685_i2c.h
         )
 
 pico_enable_stdio_usb(pca9685_i2c 1)
