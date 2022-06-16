@@ -75,9 +75,9 @@ class PCA9685 {
     const I2C i2c;
 
 public:
-    PCA9685(i2c_inst_t* _i2c = i2c0, uint8_t sda = 4, uint8_t scl = 5, uint8_t _address = 0x40/*default*/, uint32_t i2c_speed = I2C_SPEED::DEFAULT)
-    : address(_address),  i2c(_i2c, sda, scl, i2c_speed) {
-        
+    PCA9685(i2c_inst_t* _i2c = i2c0, uint8_t sda = 4, uint8_t scl = 5, uint8_t address = 0x40/*default*/, uint32_t i2c_speed = I2C_SPEED::DEFAULT)
+    : address(address),  i2c(_i2c, sda, scl, i2c_speed) {
+
         // initialize device
         i2c.write_register(address, PCA9685_MODE1_REG, 0xA0); // A0 = restart + enable autoincrement
     }
