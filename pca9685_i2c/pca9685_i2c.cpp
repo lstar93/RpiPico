@@ -15,7 +15,7 @@ int main() {
 
     const uint8_t SDA = 8;
     const uint8_t SCL = 9;
-    PCA9685 pca9685(SDA, SCL);
+    PCA9685 pca9685(i2c0, SDA, SCL);
     pca9685.set_frequency(50); // 50Hz for servo driving
 
     while (1) {

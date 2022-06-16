@@ -9,24 +9,40 @@
 #include "pico/binary_info.h"
 #include "hardware/i2c.h"
 
-class I2C {
+enum I2C_SPEED {
+    DEFAULT = 100000,
+    FAST = 400000
+};
 
+class I2C {
     i2c_inst_t* i2c;
 
-    public:
+public:
 
-    I2C(i2c_inst_t* _i2c = i2c0): i2c(_i2c) {}
+    I2C(i2c_inst_t* i2c, uint8_t sda, uint8_t scl, uint32_t i2c_speed)
+    : i2c(i2c) {
+        // initialize i2c
+        stdio_init_all();
+
+        i2c_init(i2c, i2c_speed);
+        gpio_set_function(sda, GPIO_FUNC_I2C);
+        gpio_set_function(scl, GPIO_FUNC_I2C);
+        gpio_pull_up(sda);
+        gpio_pull_up(scl);
+        // Make the I2C pins available to picotool
+        bi_decl(bi_2pins_with_func(sda, scl, GPIO_FUNC_I2C));
+    }
 
     operator i2c_inst_t*() const {
         return i2c;
     }
 
-    void write_register(uint8_t dev_address, uint8_t reg, uint8_t value) {
+    void write_register(uint8_t dev_address, uint8_t reg, uint8_t value) const {
         uint8_t buff[2] = {reg, value};
         i2c_write_blocking(i2c, dev_address, buff, 2, false);
     }
 
-    void write_register(uint8_t dev_address, std::vector<uint8_t> values) {
+    void write_register(uint8_t dev_address, std::vector<uint8_t> values) const {
         auto buffer = std::make_unique<uint8_t[]>(values.size());
 
         for(int i=0; i<values.size(); ++i) {
@@ -36,7 +52,7 @@ class I2C {
         i2c_write_blocking(i2c, dev_address, buffer.get(), values.size(), false);
     }
 
-    uint8_t read_register(uint8_t dev_address, uint8_t reg) {
+    uint8_t read_register(uint8_t dev_address, uint8_t reg) const {
         i2c_write_blocking(i2c, dev_address, &reg, 1, false);	// write register
         i2c_read_blocking(i2c, dev_address, &reg, 1, false);		// read value
         return reg;
@@ -53,35 +69,20 @@ class I2C {
 #define PCA9685_EXTCLK_BIT      0x40
 #define PCA9685_RESTART_BIT     0x80
 
-enum I2C_SPEED {
-    DEFAULT = 100000,
-    FAST = 400000
-};
-
 // https://cdn-shop.adafruit.com/datasheets/PCA9685.pdf
 class PCA9685 {
-    uint8_t address;
-    I2C i2c;
+    const uint8_t address;
+    const I2C i2c;
 
 public:
-    PCA9685(uint8_t sda = 4, uint8_t scl = 5, uint8_t _address = 0x40/*default*/, uint32_t i2c_speed = I2C_SPEED::DEFAULT)
-    : address(_address) {
-        // initialize i2c
-        stdio_init_all();
-
-        i2c_init(i2c, i2c_speed);
-        gpio_set_function(sda, GPIO_FUNC_I2C);
-        gpio_set_function(scl, GPIO_FUNC_I2C);
-        gpio_pull_up(sda);
-        gpio_pull_up(scl);
-        // Make the I2C pins available to picotool
-        bi_decl(bi_2pins_with_func(sda, scl, GPIO_FUNC_I2C));
-
+    PCA9685(i2c_inst_t* _i2c = i2c0, uint8_t sda = 4, uint8_t scl = 5, uint8_t _address = 0x40/*default*/, uint32_t i2c_speed = I2C_SPEED::DEFAULT)
+    : address(_address),  i2c(_i2c, sda, scl, i2c_speed) {
+        
         // initialize device
         i2c.write_register(address, PCA9685_MODE1_REG, 0xA0); // A0 = restart + enable autoincrement
     }
 
-    void set_frequency(uint16_t freq) {
+    void set_frequency(uint16_t freq) const {
         // calculate prescaler value
         int preScalerVal = (25000000 / (4096 * freq)) - 1;
         if (preScalerVal > 255) {
@@ -107,7 +108,7 @@ public:
         sleep_us(500);
     }
 
-    void set_pwm(uint8_t pin, uint16_t led_on, uint16_t led_off) {
+    void set_pwm(uint8_t pin, uint16_t led_on, uint16_t led_off) const {
         if (pin > 15) {
             pin = 15;
         }
