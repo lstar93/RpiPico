@@ -100,8 +100,8 @@ int main() {
     // pca9685 on deafult gpio 4 and 5, i2c0, pins 6 and 7
     PCA9685 pca9685;
 
-    // 50Hz for servo driving and set 1500 ms (middle) init value for all servos
-    pca9685.init_servo(1500); 
+    // 50Hz for servo driving and set 1500 ms (typically middle position) init value for all servos
+    pca9685.init_servo_driver(1500); 
 
     // Drive servos
     uint16_t servo_position = 1500;

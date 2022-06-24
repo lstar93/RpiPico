@@ -18,7 +18,7 @@ int main() {
     PCA9685 pca9685(i2c0, SDA, SCL);
 
     // 50Hz for servo driving and set 1500 ms (middle) init value for all servos
-    pca9685.init_servo(1500); 
+    pca9685.init_servo_driver(1500); 
 
     while (1) {
 

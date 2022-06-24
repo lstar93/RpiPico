@@ -71,6 +71,7 @@ public:
 class PCA9685 {
     const uint8_t address;
     const I2C i2c;
+    const uint8_t MAX_CHANNELS = 16;
 
 public:
     PCA9685(i2c_inst_t* _i2c = i2c0, uint8_t sda = 4, uint8_t scl = 5, uint8_t address = 0x40/*default*/, uint32_t i2c_speed = I2C_SPEED::DEFAULT)
@@ -107,8 +108,8 @@ public:
     }
 
     void set_pwm(uint8_t pin, uint16_t led_on, uint16_t led_off) const {
-        if (pin > 15) {
-            pin = 15;
+        if (pin > MAX_CHANNELS - 1) {
+            pin = MAX_CHANNELS - 1;
         }
 
         std::vector<uint8_t> buffer(5);
@@ -122,15 +123,20 @@ public:
     }
 
     // Servo
-    void init_servo(uint16_t init_ms = 0) {
+    void init_servo_driver(std::vector<uint16_t> init_ms_values = {}) {
         // set servo frequency 50 Hz
         set_frequency(50);
         // init servos with middle position
-        if(init_ms > 0) {
-            for(int i=0; i<16; ++i) {
-                set_servo_position(i, init_ms);
+        for(int i=0; i<init_ms_values.size(); ++i) {
+            if(i < MAX_CHANNELS) {
+                set_servo_position(i, init_ms_values[i]);
             }
         }
+    }
+
+    void init_servo_driver(uint16_t init_ms = 0) {
+        // init all 16 channels with desired value
+        init_servo_driver({MAX_CHANNELS, init_ms});
     }
 
     void set_servo_position(uint8_t channel, uint16_t ms) {
