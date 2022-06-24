@@ -9,7 +9,8 @@
 #include <map>
 #include <functional>
 
-/*enum gpio_irq_source {
+/*
+enum gpio_irq_source {
     LEVEL_LOW,
     LEVEL_HIGH,
     EDGE_FALL,
@@ -35,10 +36,10 @@ gpio_irq_source gpio_get_event_id(uint32_t events) {
     return UNKNOWN;
 }*/
 
-using button_callbacks_map_t = std::map<uint8_t, std::function<void()>>;
-button_callbacks_map_t gpio_callback_wrapper;
-
 class Button_IRQ {
+    using button_callbacks_map_t = std::map<uint8_t, std::function<void()>>;
+    static button_callbacks_map_t gpio_callback_wrapper;
+
     static void gpio_callback(uint gpio, uint32_t events) {
         // Debounce control
         static unsigned long time = to_ms_since_boot(get_absolute_time());
@@ -65,7 +66,8 @@ class Button_IRQ {
 
 public:
 
-    static Button_IRQ Create(uint8_t gpio, gpio_irq_level level) {
+    // handle button state change on endge fall by default
+    static Button_IRQ Create(uint8_t gpio, gpio_irq_level level = GPIO_IRQ_EDGE_FALL) {
         return Button_IRQ(gpio, level);
     }
 
@@ -75,16 +77,27 @@ public:
         return *this;
     }
 };
+Button_IRQ::button_callbacks_map_t Button_IRQ::gpio_callback_wrapper = {};
+
+enum GPIO {
+    GPIO_10=10,
+    GPIO_11,
+    GPIO_12,
+    GPIO_13,
+    GPIO_14,
+    GPIO_15,
+    GPIO_25
+};
 
 int main() {
     stdio_init_all();
 
     // led blink
-    const uint LED_PIN = 25;
+    const uint LED_PIN = GPIO_25;
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
-    // pca9685 on deafult gpio 4 and 5 i2c0, pins 7 and 8
+    // pca9685 on deafult gpio 4 and 5, i2c0, pins 6 and 7
     PCA9685 pca9685;
 
     // 50Hz for servo driving and set 1500 ms (middle) init value for all servos
@@ -93,7 +106,7 @@ int main() {
     // Drive servos
     uint16_t servo_position = 1500;
 
-    auto button4 = Button_IRQ::Create(13, GPIO_IRQ_EDGE_FALL).set_callback(
+    auto button4 = Button_IRQ::Create(GPIO_13).set_callback(
         [&]() {
             if(servo_position > 0) {
                 servo_position -= 100;
@@ -101,7 +114,7 @@ int main() {
             printf("Choosed position %d ms\n", servo_position);
         }
     );
-    auto button5 = Button_IRQ::Create(14, GPIO_IRQ_EDGE_FALL).set_callback(
+    auto button5 = Button_IRQ::Create(GPIO_14).set_callback(
         [&]() {
             if(servo_position < 2000) {
                 servo_position += 100;
@@ -111,7 +124,7 @@ int main() {
     );
 
     uint8_t servo_pin = 0;
-    auto button0 = Button_IRQ::Create(10, GPIO_IRQ_EDGE_FALL).set_callback(
+    auto button0 = Button_IRQ::Create(GPIO_10).set_callback(
         [&]() {
             if(servo_pin > 0) {
                 servo_pin -= 1;
@@ -119,7 +132,7 @@ int main() {
             printf("Choosed servo %d\n", servo_pin);
         }
     );
-    auto button1 = Button_IRQ::Create(11, GPIO_IRQ_EDGE_FALL).set_callback(
+    auto button1 = Button_IRQ::Create(GPIO_11).set_callback(
         [&]() {
             if(servo_pin < 6) {
                 servo_pin += 1;
@@ -128,19 +141,12 @@ int main() {
         }
     );
 
-    auto button2 = Button_IRQ::Create(12, GPIO_IRQ_EDGE_FALL).set_callback(
+    auto button2 = Button_IRQ::Create(GPIO_12).set_callback(
         [&]() {
-            // pca9685.set_servo_position(servo_pin, servo_position);
             printf("Setting servo %d position to %d ms\n", servo_pin, servo_position);
+            pca9685.set_servo_position(servo_pin, servo_position);
         }
     );
-
-    /*auto button1 = Button_IRQ::Create(11, GPIO_IRQ_EDGE_FALL).set_callback(button10_cb);
-    auto button2 = Button_IRQ::Create(12, GPIO_IRQ_EDGE_FALL).set_callback(button10_cb);
-    auto button3 = Button_IRQ::Create(13, GPIO_IRQ_EDGE_FALL).set_callback(button10_cb);
-    auto button4 = Button_IRQ::Create(14, GPIO_IRQ_EDGE_FALL).set_callback(button10_cb);
-    auto button5 = Button_IRQ::Create(15, GPIO_IRQ_EDGE_FALL).set_callback(button10_cb);
-    auto button6 = Button_IRQ::Create(16, GPIO_IRQ_EDGE_FALL).set_callback(button10_cb);*/
 
     while (1) {
         // led blink
@@ -148,7 +154,6 @@ int main() {
         sleep_ms(500);
         gpio_put(LED_PIN, 0);
         sleep_ms(500);
-        // printf("ms: %d, \n", cnt);
     }
 
     return 0;
