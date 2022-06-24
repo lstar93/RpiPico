@@ -16,13 +16,24 @@ int main() {
     const uint8_t SDA = 8;
     const uint8_t SCL = 9;
     PCA9685 pca9685(i2c0, SDA, SCL);
-    pca9685.set_frequency(50); // 50Hz for servo driving
+
+    // 50Hz for servo driving and set 1500 ms (middle) init value for all servos
+    pca9685.init_servo(1500); 
 
     while (1) {
 
-        pca9685.set_pwm(0, 0, 500);
-        pca9685.set_pwm(1, 0, 1500);
-        pca9685.set_pwm(2, 0, 2000);
+        pca9685.set_servo_position(0, 2000);
+        pca9685.set_servo_position(1, 1300);
+        pca9685.set_servo_position(2, 1700);
+        pca9685.set_servo_position(3, 1000);
+
+        /*
+        pca9685.set_pwm(0, 0, 300);
+        pca9685.set_pwm(1, 0, 300);
+        pca9685.set_pwm(2, 0, 400);
+        pca9685.set_pwm(3, 0, 200);
+        pca9685.set_pwm(4, 0, 300);
+        */
 
         // led blink
         gpio_put(LED_PIN, 1);

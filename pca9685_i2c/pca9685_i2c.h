@@ -22,8 +22,6 @@ public:
     I2C(i2c_inst_t* i2c, uint8_t sda, uint8_t scl, uint32_t i2c_speed)
     : i2c(i2c) {
         // initialize i2c
-        stdio_init_all();
-
         i2c_init(i2c, i2c_speed);
         gpio_set_function(sda, GPIO_FUNC_I2C);
         gpio_set_function(scl, GPIO_FUNC_I2C);
@@ -123,6 +121,29 @@ public:
         i2c.write_register(address, buffer);
     }
 
+    // Servo
+    void init_servo(uint16_t init_ms = 0) {
+        // set servo frequency 50 Hz
+        set_frequency(50);
+        // init servos with middle position
+        if(init_ms > 0) {
+            for(int i=0; i<16; ++i) {
+                set_servo_position(i, init_ms);
+            }
+        }
+    }
+
+    void set_servo_position(uint8_t channel, uint16_t ms) {
+        // Servo can be driven by values from 1 to 2 ms
+        if(ms < 1000) {
+            ms = 1000;
+        } else if (ms > 2000) {
+            ms = 2000;
+        }
+
+        auto pwm = (ms*1000) / (20000000 / 4096);
+        set_pwm(channel, 0, pwm);
+    }
 };
 
 #endif
