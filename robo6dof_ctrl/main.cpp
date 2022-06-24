@@ -39,26 +39,40 @@ using button_callbacks_map_t = std::map<uint8_t, std::function<void()>>;
 button_callbacks_map_t gpio_callback_wrapper;
 
 class Button_IRQ {
-
     static void gpio_callback(uint gpio, uint32_t events) {
-        // Check interrupt event id
-        // auto evt_id = gpio_get_event_id(events);
-        // printf("GPIO %d %d %s\n", gpio, evt_id, gpio_irq_code_to_str[evt_id].c_str());
-        if(gpio_callback_wrapper.find(gpio) != gpio_callback_wrapper.end()) {
-            gpio_callback_wrapper[gpio]();
+        // Debounce control
+        static unsigned long time = to_ms_since_boot(get_absolute_time());
+        static const int delayTime = 300; // Delay for every push button may vary
+        if ((to_ms_since_boot(get_absolute_time())-time)>delayTime) {
+            // Recommend to not to change the position of this line
+            time = to_ms_since_boot(get_absolute_time());
+            
+            if(gpio_callback_wrapper.find(gpio) != gpio_callback_wrapper.end()) {
+                gpio_callback_wrapper[gpio]();
+            }
         }
     }
 
     uint8_t gpio = 0;
+    std::function<void()> cb = 
+    [&]() {
+        printf("GPIO %d\n", gpio);
+    }; 
 
-public:
-    Button_IRQ(uint8_t gpio, gpio_irq_level level, bool enabled): gpio(gpio){
-        gpio_set_irq_enabled_with_callback(gpio, level, enabled, gpio_callback);
-        gpio_callback_wrapper[gpio] = std::bind(&Button_IRQ::callback, *this);
+    Button_IRQ(uint8_t gpio, gpio_irq_level level): gpio(gpio) {
+        gpio_set_irq_enabled_with_callback(gpio, level, true, gpio_callback); // create interrupt on gpio, always enabled
     }
 
-    void callback() {
-        printf("Button %d\n", gpio);
+public:
+
+    static Button_IRQ Create(uint8_t gpio, gpio_irq_level level) {
+        return Button_IRQ(gpio, level);
+    }
+
+    Button_IRQ& set_callback(const std::function<void()>& _cb) {
+        cb = _cb;
+        gpio_callback_wrapper[gpio] = cb;
+        return *this;
     }
 };
 
@@ -71,26 +85,62 @@ int main() {
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
     // pca9685 on deafult gpio 4 and 5 i2c0, pins 7 and 8
-    /*PCA9685 pca9685;
+    PCA9685 pca9685;
 
     // 50Hz for servo driving and set 1500 ms (middle) init value for all servos
     pca9685.init_servo(1500); 
 
-    // std::vector<uint16_t> servo_positions(6);*/
+    // Drive servos
+    uint16_t servo_position = 1500;
 
-    // gpio_set_irq_enabled_with_callback(10, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
-    // gpio_set_irq_enabled_with_callback(11, GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
-    // gpio_set_irq_enabled_with_callback(12, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
-    // gpio_set_irq_enabled_with_callback(13, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
-    // gpio_set_irq_enabled_with_callback(14, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
-    //gpio_set_irq_enabled_with_callback(15, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
+    auto button4 = Button_IRQ::Create(13, GPIO_IRQ_EDGE_FALL).set_callback(
+        [&]() {
+            if(servo_position > 0) {
+                servo_position -= 100;
+            }
+            printf("Choosed position %d ms\n", servo_position);
+        }
+    );
+    auto button5 = Button_IRQ::Create(14, GPIO_IRQ_EDGE_FALL).set_callback(
+        [&]() {
+            if(servo_position < 2000) {
+                servo_position += 100;
+            }
+            printf("Choosed position %d ms\n", servo_position);
+        }
+    );
 
-    Button_IRQ button10(10, GPIO_IRQ_EDGE_RISE, true);
-    Button_IRQ button11(11, GPIO_IRQ_EDGE_RISE, true);
-    Button_IRQ button12(12, GPIO_IRQ_EDGE_RISE, true);
-    Button_IRQ button13(13, GPIO_IRQ_EDGE_RISE, true);
-    Button_IRQ button14(14, GPIO_IRQ_EDGE_RISE, true);
-    Button_IRQ button15(15, GPIO_IRQ_EDGE_RISE, true);
+    uint8_t servo_pin = 0;
+    auto button0 = Button_IRQ::Create(10, GPIO_IRQ_EDGE_FALL).set_callback(
+        [&]() {
+            if(servo_pin > 0) {
+                servo_pin -= 1;
+            }
+            printf("Choosed servo %d\n", servo_pin);
+        }
+    );
+    auto button1 = Button_IRQ::Create(11, GPIO_IRQ_EDGE_FALL).set_callback(
+        [&]() {
+            if(servo_pin < 6) {
+                servo_pin += 1;
+            }
+            printf("Choosed servo %d\n", servo_pin);
+        }
+    );
+
+    auto button2 = Button_IRQ::Create(12, GPIO_IRQ_EDGE_FALL).set_callback(
+        [&]() {
+            // pca9685.set_servo_position(servo_pin, servo_position);
+            printf("Setting servo %d position to %d ms\n", servo_pin, servo_position);
+        }
+    );
+
+    /*auto button1 = Button_IRQ::Create(11, GPIO_IRQ_EDGE_FALL).set_callback(button10_cb);
+    auto button2 = Button_IRQ::Create(12, GPIO_IRQ_EDGE_FALL).set_callback(button10_cb);
+    auto button3 = Button_IRQ::Create(13, GPIO_IRQ_EDGE_FALL).set_callback(button10_cb);
+    auto button4 = Button_IRQ::Create(14, GPIO_IRQ_EDGE_FALL).set_callback(button10_cb);
+    auto button5 = Button_IRQ::Create(15, GPIO_IRQ_EDGE_FALL).set_callback(button10_cb);
+    auto button6 = Button_IRQ::Create(16, GPIO_IRQ_EDGE_FALL).set_callback(button10_cb);*/
 
     while (1) {
         // led blink
