@@ -35,15 +35,16 @@ int main() {
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
     // pca9685 on deafult gpio 4 and 5, i2c0, pins 6 and 7
-    PCA9685 pca9685;
+    auto pca9685 = std::make_shared<PCA9685>();
+    ServoDriver servo_drv(pca9685);
 
     // 50Hz for servo driving and set 1500 ms (typically middle position) init value for all servos
     // limit servo signal from 500 to 2500
-    pca9685.init_servo_driver(1500, towerpro_mg995_limits::min, towerpro_mg995_limits::max); 
+    servo_drv.init_servo_driver(1500, towerpro_mg995_limits::min, towerpro_mg995_limits::max); 
 
     // Drive servos
     uint16_t servo_position = 1500;
-    auto button4 = Button_IRQ::Create(GPIO_13).set_callback(
+    auto button3 = Button_IRQ::Create(GPIO_13).set_callback(
         [&]() {
             if(servo_position > towerpro_mg995_limits::min) {
                 servo_position -= 100;
@@ -51,7 +52,7 @@ int main() {
             printf("Choosed position %d ms\n", servo_position);
         }
     );
-    auto button5 = Button_IRQ::Create(GPIO_14).set_callback(
+    auto button4 = Button_IRQ::Create(GPIO_14).set_callback(
         [&]() {
             if(servo_position < towerpro_mg995_limits::max) {
                 servo_position += 100;
@@ -83,7 +84,17 @@ int main() {
     auto button2 = Button_IRQ::Create(GPIO_12).set_callback(
         [&]() {
             printf("Setting servo %d position to %d ms\n", servo_pin, servo_position);
-            pca9685.set_servo_position(servo_pin, servo_position);
+            servo_drv.set_servo_position(servo_pin, servo_position);
+        }
+    );
+
+    // Toggle servo edge position
+    auto position = towerpro_mg995_limits::min;
+    auto button5 = Button_IRQ::Create(GPIO_15).set_callback(
+        [&]() {
+            printf("Setting servo %d position to %d ms\n", servo_pin, position);
+            servo_drv.set_servo_position(servo_pin, position);
+            position = (position == towerpro_mg995_limits::min ? towerpro_mg995_limits::max : towerpro_mg995_limits::min); // toggle
         }
     );
 

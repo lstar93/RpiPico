@@ -71,9 +71,6 @@ public:
 class PCA9685 {
     const uint8_t address;
     const I2C i2c;
-    const uint8_t MAX_CHANNELS = 16;
-    uint16_t limit_min; 
-    uint16_t limit_max;
 
 public:
     PCA9685(i2c_inst_t* _i2c = i2c0, uint8_t sda = 4, uint8_t scl = 5, uint8_t address = 0x40/*default*/, uint32_t i2c_speed = I2C_SPEED::DEFAULT)
@@ -124,15 +121,28 @@ public:
         i2c.write_register(address, buffer);
     }
 
+    static const uint8_t MAX_CHANNELS = 16;
+};
+
+class ServoDriver {
+    std::shared_ptr<PCA9685> pca = nullptr;
+    uint16_t limit_min; 
+    uint16_t limit_max;
+
+    public:
+
+    ServoDriver(std::shared_ptr<PCA9685>& pca): pca(pca) {}
+
     // Servo
     void init_servo_driver(std::vector<uint16_t>& init_ms_values, uint16_t lmin = 1000, uint16_t lmax = 2000) {
+        if(pca == nullptr) { return; }
         // set servo frequency 50 Hz
         limit_min = lmin;
         limit_max = lmax;
-        set_frequency(50);
+        pca->set_frequency(50);
         // init servos with middle position
         for(int i=0; i<init_ms_values.size(); ++i) {
-            if(i < MAX_CHANNELS) {
+            if(i < PCA9685::MAX_CHANNELS) {
                 set_servo_position(i, init_ms_values[i]);
             }
         }
@@ -140,11 +150,12 @@ public:
 
     void init_servo_driver(uint16_t init_ms = 0, uint16_t lmin = 1000, uint16_t lmax = 2000) {
         // init all 16 channels with desired value
-        std::vector<uint16_t> vec(MAX_CHANNELS, init_ms);
+        std::vector<uint16_t> vec(PCA9685::MAX_CHANNELS, init_ms);
         init_servo_driver(vec, lmin, lmax);
     }
 
     void set_servo_position(uint8_t channel, uint16_t ms) {
+        if(pca == nullptr) { return; }
         // Servo can be driven by values from 1 to 2 ms
         if(ms < limit_min) {
             ms = limit_min;
@@ -153,7 +164,7 @@ public:
         }
 
         auto pwm = (ms*1000) / (20000000 / 4096);
-        set_pwm(channel, 0, pwm);
+        pca->set_pwm(channel, 0, pwm);
     }
 };
 
