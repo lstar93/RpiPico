@@ -44,7 +44,7 @@ int main() {
 
     // Drive servos
     uint16_t servo_position = 1500;
-    auto button3 = Button_IRQ::Create(GPIO_13).set_callback(
+    Button_IRQ::Create(GPIO_13).set_callback(
         [&]() {
             if(servo_position > towerpro_mg995_limits::min) {
                 servo_position -= 100;
@@ -52,7 +52,7 @@ int main() {
             printf("Choosed position %d ms\n", servo_position);
         }
     );
-    auto button4 = Button_IRQ::Create(GPIO_14).set_callback(
+    Button_IRQ::Create(GPIO_14).set_callback(
         [&]() {
             if(servo_position < towerpro_mg995_limits::max) {
                 servo_position += 100;
@@ -63,7 +63,7 @@ int main() {
 
     // Choose servo to drive
     uint8_t servo_pin = 0;
-    auto button0 = Button_IRQ::Create(GPIO_10).set_callback(
+    Button_IRQ::Create(GPIO_10).set_callback(
         [&]() {
             if(servo_pin > 0) {
                 servo_pin -= 1;
@@ -71,7 +71,7 @@ int main() {
             printf("Choosed servo %d\n", servo_pin);
         }
     );
-    auto button1 = Button_IRQ::Create(GPIO_11).set_callback(
+    Button_IRQ::Create(GPIO_11).set_callback(
         [&]() {
             if(servo_pin < 6) {
                 servo_pin += 1;
@@ -81,7 +81,7 @@ int main() {
     );
 
     // Set servo to choosed position
-    auto button2 = Button_IRQ::Create(GPIO_12).set_callback(
+    Button_IRQ::Create(GPIO_12).set_callback(
         [&]() {
             printf("Setting servo %d position to %d ms\n", servo_pin, servo_position);
             servo_drv.set_servo_position(servo_pin, servo_position);
@@ -90,7 +90,7 @@ int main() {
 
     // Toggle servo edge position
     auto position = towerpro_mg995_limits::min;
-    auto button5 = Button_IRQ::Create(GPIO_15).set_callback(
+    Button_IRQ::Create(GPIO_15).set_callback(
         [&]() {
             printf("Setting servo %d position to %d ms\n", servo_pin, position);
             servo_drv.set_servo_position(servo_pin, position);
