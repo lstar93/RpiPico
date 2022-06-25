@@ -62,7 +62,7 @@ class Button_IRQ {
 public:
 
     // handle button state change on endge fall by default
-    static Button_IRQ Create(uint8_t gpio, gpio_irq_level level = GPIO_IRQ_EDGE_FALL) {
+    static Button_IRQ CreateOn(uint8_t gpio, gpio_irq_level level = GPIO_IRQ_EDGE_FALL) {
         return Button_IRQ(gpio, level);
     }
 
