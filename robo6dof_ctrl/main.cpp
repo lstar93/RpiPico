@@ -20,6 +20,12 @@ enum GPIO {
     GPIO_25=25
 };
 
+// servo driver signal limits
+enum towerpro_mg995_limits {
+    min = 500,
+    max = 2500
+};
+
 int main() {
     stdio_init_all();
 
@@ -32,14 +38,14 @@ int main() {
     PCA9685 pca9685;
 
     // 50Hz for servo driving and set 1500 ms (typically middle position) init value for all servos
-    sleep_ms(10000);
-    pca9685.init_servo_driver(1500); 
+    // limit servo signal from 500 to 2500
+    pca9685.init_servo_driver(1500, towerpro_mg995_limits::min, towerpro_mg995_limits::max); 
 
     // Drive servos
     uint16_t servo_position = 1500;
     auto button4 = Button_IRQ::Create(GPIO_13).set_callback(
         [&]() {
-            if(servo_position > 0) {
+            if(servo_position > towerpro_mg995_limits::min) {
                 servo_position -= 100;
             }
             printf("Choosed position %d ms\n", servo_position);
@@ -47,7 +53,7 @@ int main() {
     );
     auto button5 = Button_IRQ::Create(GPIO_14).set_callback(
         [&]() {
-            if(servo_position < 2000) {
+            if(servo_position < towerpro_mg995_limits::max) {
                 servo_position += 100;
             }
             printf("Choosed position %d ms\n", servo_position);
