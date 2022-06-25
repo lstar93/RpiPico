@@ -123,12 +123,13 @@ public:
     }
 
     // Servo
-    void init_servo_driver(std::vector<uint16_t> init_ms_values = {}) {
+    void init_servo_driver(std::vector<uint16_t>& init_ms_values) {
         // set servo frequency 50 Hz
         set_frequency(50);
         // init servos with middle position
         for(int i=0; i<init_ms_values.size(); ++i) {
             if(i < MAX_CHANNELS) {
+                printf("MAX_CHANNELS, i, init_ms_values[i], init_ms_values.size() = %d, %d, %d, %d\n", MAX_CHANNELS, i, init_ms_values[i], init_ms_values.size());
                 set_servo_position(i, init_ms_values[i]);
             }
         }
@@ -136,7 +137,8 @@ public:
 
     void init_servo_driver(uint16_t init_ms = 0) {
         // init all 16 channels with desired value
-        init_servo_driver({MAX_CHANNELS, init_ms});
+        std::vector<uint16_t> vec(MAX_CHANNELS, init_ms);
+        init_servo_driver(vec);
     }
 
     void set_servo_position(uint8_t channel, uint16_t ms) {
