@@ -36,7 +36,7 @@ int main() {
     pca9685.init_servo_driver(1500); 
 
     // Drive servos
-    /*uint16_t servo_position = 1500;
+    uint16_t servo_position = 1500;
     auto button4 = Button_IRQ::Create(GPIO_13).set_callback(
         [&]() {
             if(servo_position > 0) {
@@ -79,7 +79,7 @@ int main() {
             printf("Setting servo %d position to %d ms\n", servo_pin, servo_position);
             pca9685.set_servo_position(servo_pin, servo_position);
         }
-    );*/
+    );
 
     while (1) {
         // led blink

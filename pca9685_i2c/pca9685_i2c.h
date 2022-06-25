@@ -129,7 +129,6 @@ public:
         // init servos with middle position
         for(int i=0; i<init_ms_values.size(); ++i) {
             if(i < MAX_CHANNELS) {
-                printf("MAX_CHANNELS, i, init_ms_values[i], init_ms_values.size() = %d, %d, %d, %d\n", MAX_CHANNELS, i, init_ms_values[i], init_ms_values.size());
                 set_servo_position(i, init_ms_values[i]);
             }
         }
