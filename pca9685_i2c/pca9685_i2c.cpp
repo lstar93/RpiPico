@@ -15,8 +15,9 @@ int main() {
 
     const uint8_t SDA = 8;
     const uint8_t SCL = 9;
-    PCA9685 pca9685(i2c0, SDA, SCL);
-    ServoDriver servo_drv(&pca9685);
+
+    auto pca9685 = std::make_shared<PCA9685>(i2c0, SDA, SCL);
+    ServoDriver servo_drv(pca9685);
 
     // 50Hz for servo driving and set 1500 ms (middle) init value for all servos
     servo_drv.init_servo_driver(1500); 

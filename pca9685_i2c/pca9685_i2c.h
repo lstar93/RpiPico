@@ -134,12 +134,12 @@ class ServoDriver {
     ServoDriver(std::shared_ptr<PCA9685>& pca): pca(pca) {}
 
     // Servo
-    void init_servo_driver(std::vector<uint16_t>& init_ms_values, uint16_t lmin = 1000, uint16_t lmax = 2000) {
+    void init_servo_driver(std::vector<uint16_t>& init_ms_values, uint16_t freqency = 50, uint16_t lmin = 1000, uint16_t lmax = 2000) {
         if(pca == nullptr) { return; }
         // set servo frequency 50 Hz
         limit_min = lmin;
         limit_max = lmax;
-        pca->set_frequency(50);
+        pca->set_frequency(freqency);
         // init servos with middle position
         for(int i=0; i<init_ms_values.size(); ++i) {
             if(i < PCA9685::MAX_CHANNELS) {
@@ -148,10 +148,10 @@ class ServoDriver {
         }
     }
 
-    void init_servo_driver(uint16_t init_ms = 0, uint16_t lmin = 1000, uint16_t lmax = 2000) {
+    void init_servo_driver(uint16_t init_ms = 0, uint16_t freqency = 50, uint16_t lmin = 1000, uint16_t lmax = 2000) {
         // init all 16 channels with desired value
         std::vector<uint16_t> vec(PCA9685::MAX_CHANNELS, init_ms);
-        init_servo_driver(vec, lmin, lmax);
+        init_servo_driver(vec, freqency, lmin, lmax);
     }
 
     void set_servo_position(uint8_t channel, uint16_t ms) {
