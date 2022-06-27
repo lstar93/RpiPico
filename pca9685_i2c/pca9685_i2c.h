@@ -126,15 +126,15 @@ public:
 
 class ServoDriver {
     std::shared_ptr<PCA9685> pca = nullptr;
-    uint16_t limit_min; 
-    uint16_t limit_max;
+    uint16_t limit_min = 0; 
+    uint16_t limit_max = 0;
 
     public:
 
     ServoDriver(std::shared_ptr<PCA9685>& pca): pca(pca) {}
 
     // Servo
-    void init_servo_driver(std::vector<uint16_t>& init_ms_values, uint16_t freqency = 50, uint16_t lmin = 1000, uint16_t lmax = 2000) {
+    void init_servo_driver(std::vector<uint16_t>& init_ms_values, uint16_t lmin = 1000, uint16_t lmax = 2000, uint16_t freqency = 50) {
         if(pca == nullptr) { return; }
         // set servo frequency 50 Hz
         limit_min = lmin;
@@ -148,10 +148,10 @@ class ServoDriver {
         }
     }
 
-    void init_servo_driver(uint16_t init_ms = 0, uint16_t freqency = 50, uint16_t lmin = 1000, uint16_t lmax = 2000) {
+    void init_servo_driver(uint16_t init_ms = 0, uint16_t lmin = 1000, uint16_t lmax = 2000, uint16_t freqency = 50) {
         // init all 16 channels with desired value
         std::vector<uint16_t> vec(PCA9685::MAX_CHANNELS, init_ms);
-        init_servo_driver(vec, freqency, lmin, lmax);
+        init_servo_driver(vec, lmin, lmax, freqency);
     }
 
     void set_servo_position(uint8_t channel, uint16_t ms) {
@@ -162,8 +162,8 @@ class ServoDriver {
         } else if (ms > limit_max) {
             ms = limit_max;
         }
-
         auto pwm = (ms*1000) / (20000000 / 4096);
+        printf("WRITE PWM: %d, MS: %d\n", pwm, ms);
         pca->set_pwm(channel, 0, pwm);
     }
 };
