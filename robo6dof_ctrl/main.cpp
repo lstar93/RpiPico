@@ -9,6 +9,7 @@
 #include "hardware/gpio.h"
 #include <map>
 #include <functional>
+#include <sstream>
 
 enum GPIO {
     GPIO_10=10,
@@ -17,6 +18,7 @@ enum GPIO {
     GPIO_13,
     GPIO_14,
     GPIO_15,
+    GPIO_16,
     GPIO_25=25
 };
 
@@ -25,6 +27,20 @@ enum towerpro_mg995_limits {
     min = 500,
     max = 2500
 };
+
+using roboarm_pose_t = std::map<uint8_t, uint16_t>; // pin to signal width map
+std::string roboarm_pose_to_str(roboarm_pose_t& pose) {
+    if(!pose.empty()) {  
+        std::ostringstream os;
+        os << "{ ";
+        for(const auto& [pin, signal]: pose) {
+            os << std::to_string(pin) << ":" << signal << " ";
+        }
+        os << "}";
+        return os.str();
+    }
+    return "{}";    
+}
 
 int main() {
     stdio_init_all();
@@ -73,30 +89,50 @@ int main() {
     );
     Button_IRQ::CreateOn(GPIO_11).set_callback(
         [&]() {
-            if(servo_pin < 6) {
+            if(servo_pin < 5) {
                 servo_pin += 1;
             }
             printf("Choosed servo %d\n", servo_pin);
         }
     );
 
-    // Set servo to choosed position
+    roboarm_pose_t roboarm_pose; // prepare vector for robo arm pose
+    // Add servo position to vector
     Button_IRQ::CreateOn(GPIO_12).set_callback(
         [&]() {
-            printf("Setting servo %d position to %d ms\n", servo_pin, servo_position);
-            servo_drv.set_servo_position(servo_pin, servo_position);
+            printf("Adding servo %d position %d ms to pose vector\n", servo_pin, servo_position);
+            //servo_drv.set_servo_position(servo_pin, servo_position);
+            roboarm_pose[servo_pin] = servo_position;
+            servo_position = 1500; // reset value
+            printf("Current pose vector %s\n", roboarm_pose_to_str(roboarm_pose).c_str());
+        }
+    );
+
+    // Add all servos positions to vector of roboarm position
+    Button_IRQ::CreateOn(GPIO_15).set_callback(
+        [&]() {
+            if(roboarm_pose.size() < 6) {
+                printf("Pose should have at least 6 elements instead of %d!\n", roboarm_pose.size());
+                return;
+            }
+            printf("Setting pose: %s\n", roboarm_pose_to_str(roboarm_pose).c_str());
+            for(const auto& [pin, signal]: roboarm_pose) {
+                servo_drv.set_servo_position(pin, signal);
+            }
+            roboarm_pose.clear(); // prepare map for another pose
+            servo_pin = 0; // back to first servo
         }
     );
 
     // Toggle servo edge position
-    auto position = towerpro_mg995_limits::min;
+    /*auto position = towerpro_mg995_limits::min;
     Button_IRQ::CreateOn(GPIO_15).set_callback(
         [&]() {
             printf("Setting servo %d position to %d ms\n", servo_pin, position);
             servo_drv.set_servo_position(servo_pin, position);
             position = (position == towerpro_mg995_limits::min ? towerpro_mg995_limits::max : towerpro_mg995_limits::min); // toggle
         }
-    );
+    );*/
 
     while (1) {
         // led blink
