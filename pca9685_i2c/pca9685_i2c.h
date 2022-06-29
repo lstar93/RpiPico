@@ -107,8 +107,8 @@ public:
     }
 
     void set_pwm(uint8_t pin, uint16_t led_on, uint16_t led_off) const {
-        if (pin > 15) {
-            pin = 15;
+        if (pin > MAX_CHANNELS - 1) {
+            pin = MAX_CHANNELS - 1;
         }
 
         std::vector<uint8_t> buffer(5);
@@ -121,28 +121,50 @@ public:
         i2c.write_register(address, buffer);
     }
 
+    static const uint8_t MAX_CHANNELS = 16;
+};
+
+class ServoDriver {
+    std::shared_ptr<PCA9685> pca = nullptr;
+    uint16_t limit_min = 0; 
+    uint16_t limit_max = 0;
+
+    public:
+
+    ServoDriver(std::shared_ptr<PCA9685>& pca): pca(pca) {}
+
     // Servo
-    void init_servo(uint16_t init_ms = 0) {
+    void init_servo_driver(std::vector<uint16_t>& init_ms_values, uint16_t lmin = 1000, uint16_t lmax = 2000, uint16_t freqency = 50) {
+        if(pca == nullptr) { return; }
         // set servo frequency 50 Hz
-        set_frequency(50);
+        limit_min = lmin;
+        limit_max = lmax;
+        pca->set_frequency(freqency);
         // init servos with middle position
-        if(init_ms > 0) {
-            for(int i=0; i<16; ++i) {
-                set_servo_position(i, init_ms);
+        for(int i=0; i<init_ms_values.size(); ++i) {
+            if(i < PCA9685::MAX_CHANNELS) {
+                set_servo_position(i, init_ms_values[i]);
             }
         }
     }
 
-    void set_servo_position(uint8_t channel, uint16_t ms) {
-        // Servo can be driven by values from 1 to 2 ms
-        if(ms < 1000) {
-            ms = 1000;
-        } else if (ms > 2000) {
-            ms = 2000;
-        }
+    void init_servo_driver(uint16_t init_ms = 0, uint16_t lmin = 1000, uint16_t lmax = 2000, uint16_t freqency = 50) {
+        // init all 16 channels with desired value
+        std::vector<uint16_t> vec(PCA9685::MAX_CHANNELS, init_ms);
+        init_servo_driver(vec, lmin, lmax, freqency);
+    }
 
+    void set_servo_position(uint8_t channel, uint16_t ms) {
+        if(pca == nullptr) { return; }
+        // Servo can be driven by values from 1 to 2 ms
+        if(ms < limit_min) {
+            ms = limit_min;
+        } else if (ms > limit_max) {
+            ms = limit_max;
+        }
         auto pwm = (ms*1000) / (20000000 / 4096);
-        set_pwm(channel, 0, pwm);
+        // printf("WRITE PWM: %d, MS: %d\n", pwm, ms);
+        pca->set_pwm(channel, 0, pwm);
     }
 };
 
