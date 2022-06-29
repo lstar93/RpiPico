@@ -13,7 +13,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_executable(robo6dof
         main.cpp
-        ../pca9685_i2c/pca9685_i2c.h
         )
 
 pico_enable_stdio_usb(robo6dof 1)
