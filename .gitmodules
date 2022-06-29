@@ -1,7 +1,11 @@
-[submodule "pico-sdk"]
-	path = pico-sdk
-	url = https://github.com/raspberrypi/pico-sdk.git
+[submodule "pico-uart-bridge"]
+	path = pico-uart-bridge
+	url = https://github.com/Noltari/pico-uart-bridge.git
 
 [submodule "pico-examples"]
 	path = pico-examples
 	url = https://github.com/raspberrypi/pico-examples.git
+	
+[submodule "pico-sdk"]
+	path = pico-sdk
+	url = https://github.com/raspberrypi/pico-sdk.git
