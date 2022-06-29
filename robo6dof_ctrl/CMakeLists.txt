@@ -18,6 +18,8 @@ add_executable(robo6dof
 pico_enable_stdio_usb(robo6dof 1)
 pico_enable_stdio_uart(robo6dof 1)
 
+include_directories(../)
+
 # pull in common dependencies and additional i2c hardware support, adc for potentiometes
 target_link_libraries(robo6dof pico_stdlib hardware_i2c)
 

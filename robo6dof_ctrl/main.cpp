@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include "../pca9685_i2c/pca9685_i2c.h"
-#include "../button_irq/button_irq.h"
+#include "pca9685_i2c/pca9685_i2c.h"
+#include "button_irq/button_irq.h"
 #include "hardware/gpio.h"
 #include <map>
 #include <functional>
