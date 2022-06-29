@@ -163,7 +163,7 @@ class ServoDriver {
             ms = limit_max;
         }
         auto pwm = (ms*1000) / (20000000 / 4096);
-        printf("WRITE PWM: %d, MS: %d\n", pwm, ms);
+        // printf("WRITE PWM: %d, MS: %d\n", pwm, ms);
         pca->set_pwm(channel, 0, pwm);
     }
 };
