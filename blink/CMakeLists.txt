@@ -10,7 +10,8 @@ set(CMAKE_CXX_STANDARD 17)
 pico_sdk_init()
 
 add_executable(test
-  blink.c
+  blink.cpp
+  blink.h
 )
 
 pico_enable_stdio_usb(test 1)
