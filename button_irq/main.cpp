@@ -32,16 +32,16 @@ int main() {
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
-    auto button0 = Button_IRQ::CreateOn(GPIO_13).set_callback(
+    auto button0 = Button_IRQ::create_on(GPIO_13).set_callback(
         []() {
             printf("Test from lambda\n");
         }
     );
 
-    auto button1 = Button_IRQ::CreateOn(GPIO_14).set_callback(test_func);
+    auto button1 = Button_IRQ::create_on(GPIO_14).set_callback(test_func);
 
     int a = 55;
-    auto button2 = Button_IRQ::CreateOn(GPIO_13).set_callback(
+    auto button2 = Button_IRQ::create_on(GPIO_13).set_callback(
         [&]() {
             a++;
             printf("Test from lambda with global variable a = %d\n", a);
